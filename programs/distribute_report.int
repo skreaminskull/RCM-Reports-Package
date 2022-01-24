@@ -1,0 +1,297 @@
+// DI Script
+
+version "1";
+
+//+ This script contains objects or tasks that have been disabled in Visual Integrator.
+//+ Use Visual Integrator to enable them.
+
+object 'PARM' "parms" {
+	parms = {
+		{
+			name = "ReportDirectory"
+		},
+		{
+			name = "ReportName"
+		},
+		{
+			name        = "PackageLogID",
+			default     = "12",
+			testdefault = "12"
+		},
+		{
+			name        = "PackageID",
+			testdefault = "12",
+			default     = "12"
+		},
+		{
+			name = "UserName"
+		},
+		{
+			name = "ClientName"
+		},
+		{
+			name = "DistributionMethod"
+		},
+		{
+			name        = "address_type",
+			testdefault = "CC"
+		},
+		{
+			name        = "email_address",
+			testdefault = "test@test.com"
+		},
+		{
+			name        = "tmp_to_list",
+			testdefault = "testh@test.com"
+		},
+		{
+			name        = "tmp_cc_list",
+			testdefault = "test@test.com"
+		},
+		{
+			name        = "projDir",
+			default     = "/projects/RCM_ReportsPackage",
+			testdefault = "/projects/RCM_ReportsPackage"
+		},
+		{
+			name = "distFileName"
+		},
+		{
+			name        = "email_subject",
+			testdefault = "This is a test"
+		},
+		{
+			name = "package_name"
+		},
+		{
+			name = "cc_list"
+		},
+		{
+			name = "to_list"
+		},
+		{
+			name = "package_id"
+		},
+		{
+			name = "client_acronym"
+		},
+		{
+			name = "eom_ccyymm"
+		},
+		{
+			name        = "ccyymm",
+			testdefault = "201707"
+		}
+	}
+};
+
+object 'TSKL' "Main" {
+	contents = {
+		`Get Distribution List`,
+		`Distribution Details`,
+		`Update Table - Approval TS`,
+		`Email Report `,
+		`Update Table - Distributed TS`
+	}
+};
+
+object 'TASK' "Get Distribution List" {
+	inputs = {
+		`distList-SQL`
+	},
+	output = `distList-ITE`
+};
+
+object 'INPT' "distList-SQL" {
+	//+ coordinatex = `33`,
+	//+ coordinatey = `8`,
+	input_type  = `sql`,
+	sql_source  = `reports_package`,
+	sql_query   = `select d.package_id, d.address_type, e.email_address \r\n`
+		` from distribution d \r\n`
+		` inner join email_addresses e \r\n`
+		` on d.email_id = e.email_id \r\n`
+		` where d.package_id = '$(PackageID)';\r\n`
+		``
+};
+
+object 'OUTP' "distList-ITE" {
+	//+ coordinatex = `108`,
+	//+ coordinatey = `8`,
+	output_type  = `iterate`,
+	error_action = `exit`,
+	input        = `distList-SQL`,
+	parameters   = { `address_type`, `email_address` },
+	task         = `Build Distribution List`
+};
+
+object 'TASK' "Build Distribution List" {
+	//+ disabled = `true`,
+	inputs    = {
+		`distList-LST`
+	},
+	processes = {
+		`buildDist-CAL`
+	},
+	output    = `Setparm-1-SET`
+};
+
+object 'INPT' "distList-LST" {
+	//+ coordinatex = `33`,
+	//+ coordinatey = `33`,
+	input_type  = `list`,
+	columns     = { `Column_1` },
+	values      = {
+		{`DistList` }
+	}
+};
+
+object 'PROC' "buildDist-CAL" {
+	//+ coordinatex = `108`,
+	//+ coordinatey = `33`,
+	process_type = `calc`,
+	calcs        = {
+		{
+			name   = `tmp_to_list`,
+			value  = `if("$(address_type)" = "TO", if("$(tmp_to_list)" != "",concat("$(tmp_to_list)",",","$(email_address)"),"$(email_address)"),"$(tmp_to_list)")`,
+			update = `true`
+		},
+		{
+			name   = `tmp_cc_list`,
+			value  = `if("$(address_type)" = "CC", if("$(tmp_cc_list)" != "",concat("$(tmp_cc_list)",",","$(email_address)"),"$(email_address)"),"$(tmp_cc_list)")`,
+			update = `true`
+		}
+	},
+	input        = `distList-LST`
+};
+
+object 'OUTP' "Setparm-1-SET" {
+	//+ coordinatex = `183`,
+	//+ coordinatey = `33`,
+	output_type = `setparm`,
+	parameters  = { `tmp_to_list`, `tmp_cc_list` },
+	input       = `buildDist-CAL`
+};
+
+object 'TASK' "Distribution Details" {
+	inputs    = {
+		`pckDet-SQL`
+	},
+	processes = {
+		`pckDet-CAL`
+	},
+	output    = `pckDet-SET`
+};
+
+object 'INPT' "pckDet-SQL" {
+	//+ coordinatex = `8`,
+	//+ coordinatey = `8`,
+	input_type  = `sql`,
+	sql_source  = `reports_package`,
+	sql_query   = `select client_acronym, package_name, email_subject\r\n`
+		` from report_packages\r\n`
+		` where package_id = '$(PackageID)';\r\n`
+		``
+};
+
+object 'PROC' "pckDet-CAL" {
+	//+ coordinatex = `83`,
+	//+ coordinatey = `8`,
+	process_type = `calc`,
+	calcs        = {
+		{
+			name  = `package_id`,
+			value = `"$(PackageID)"`
+		},
+		{
+			name  = `to_list`,
+			value = `"$(tmp_to_list)"`
+		},
+		{
+			name  = `cc_list`,
+			value = `"$(tmp_cc_list)"`
+		},
+		{
+			name  = `eom_ccyymm`,
+			value = `"$(ccyymm)"`
+		}
+	},
+	input        = `pckDet-SQL`
+};
+
+object 'OUTP' "pckDet-SET" {
+	//+ coordinatex = `158`,
+	//+ coordinatey = `8`,
+	output_type = `setparm`,
+	parameters  = {
+		`email_subject`,
+		`package_name`,
+		`cc_list`,
+		`to_list`,
+		`package_id`,
+		`client_acronym`,
+		`eom_ccyymm`
+	},
+	input       = `pckDet-CAL`
+};
+
+object 'TASK' "Update Table - Approval TS" {
+	processes = {
+		`Approved-SQL`
+	}
+};
+
+object 'PROC' "Approved-SQL" {
+	//+ coordinatex = `58`,
+	//+ coordinatey = `8`,
+	process_type  = `sql`,
+	sql_statement = `update report_packages_log\r\n`
+		` set time_approved = now(),\r\n`
+		` "modified at" = now(),\r\n`
+		` "modified by" = '$(UserName)'\r\n`
+		` where package_log_id = $(PackageLogID)`,
+	sql_source    = `reports_package`
+};
+
+object 'TASK' "Email Report " {
+	processes = {
+		`Execute-1-EXE`
+	}
+};
+
+object 'PROC' "Execute-1-EXE" {
+	//+ coordinatex = `33`,
+	//+ coordinatey = `33`,
+	process_type  = `execute`,
+	commands      = {
+		`perl programs/eom_package_email.pl "$(package_name)" "$(eom_ccyymm)" "$(to_list)" "$(cc_list)" "$(email_subject)" "$(ReportDirectory)" "$(ReportName)"`
+	},
+	append_output = `true`
+};
+
+object 'TASK' "Update Table - Distributed TS" {
+	processes = {
+		`Distributed-SQL`
+	}
+};
+
+object 'PROC' "Distributed-SQL" {
+	//+ coordinatex = `58`,
+	//+ coordinatey = `8`,
+	process_type  = `sql`,
+	sql_statement = `update report_packages_log\r\n`
+		` set time_distributed = now()\r\n`
+		` where package_log_id = $(PackageLogID)`,
+	sql_source    = `reports_package`
+};
+
+object 'XTSK' "Main" {
+	contents = {
+		`Get Distribution List`,
+		`Build Distribution List`,
+		`Distribution Details`,
+		`Update Table - Approval TS`,
+		`Email Report `,
+		`Update Table - Distributed TS`
+	}
+};

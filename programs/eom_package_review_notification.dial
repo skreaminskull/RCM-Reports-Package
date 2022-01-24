@@ -1,0 +1,21 @@
+diveline.connect("server:port","user");
+
+//clientAcro=arg.get(1);
+
+mail.set_server("x.x.x.x");
+mail.set_from("test@test.com");
+
+marker = "/RCM/markers/report_packages_approval.mrk";
+marker.open(Model, marker);
+
+if (marker.find_succeeded(Model)) {
+  subject = "Report Packages - Review Notice";
+  message = calc.concat("There are Report Packages available that need to be reviewed and distributed. Please go the the Report Packages Review portal  https://analytics.int-imp.net/admin#page=PackageReview for a complete listing.");
+
+  mail.text("test@test.com",subject,message);
+  console.writeln("Report Package Notification sent");
+} else {
+  console.writeln("No Report Packages to review");
+}
+
+diveline.disconnect();

@@ -1,0 +1,52 @@
+diveline.connect("server:port","user");
+
+marker=arg.get(1);
+projDir=arg.get(2);
+save=arg.get(3);
+key=arg.get(4);
+val=arg.get(5);
+
+console.writeln ("This script was called with " + arg.count() + " arguments.");
+
+keys = array.new();
+vals = array.new();
+
+fileName = calc.concat(projDir, "/tmp/",save);
+
+if (val == "") {
+  marker.open(MARKER_, marker);
+}
+else {
+  // check if we have multiple key / value pairs
+  if (calc.index(key, ";")) {
+    loop = 1;
+    while(loop > 0) {
+      keyTemp = calc.scan(key,1,";");
+      array.add(keys, keyTemp);
+      valTemp = calc.scan(val,1,";");
+      array.add(vals, valTemp);
+      keyLen = calc.length(keyTemp);
+      valLen = calc.length(valTemp);
+      if (keyLen > 0) {
+        key = calc.substr(key,keyLen + 2);
+        val = calc.substr(val,valLen + 2);
+      } // if keyLen > 0
+      else {
+        loop = 0;
+      } // else keyLen not greater than 0
+      if (key == "") {
+        loop = 0;
+      } // key == ""
+    } // while loop > 0
+  } // if calc.index key
+  else {
+    array.add(keys, key);
+    array.add(vals, val);
+  } // calc.index key does not contain semicolons
+  marker.open(MARKER_, marker, keys, vals);
+} 
+
+marker.save_window(MARKER_, fileName, "pdf");
+console.writeln("JV markers saved");
+console.writeln("marker2pdf.dial Script Complete");
+diveline.disconnect();

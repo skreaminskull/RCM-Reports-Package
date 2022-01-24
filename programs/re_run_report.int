@@ -1,0 +1,99 @@
+version "1";
+object 'PARM' "parms" {
+	parms = {
+		{
+			name = "ReportDirectory"
+		},
+		{
+			name = "ReportName"
+		},
+		{
+			name = "PackageLogID"
+		},
+		{
+			name        = "PackageID",
+			testdefault = "12"
+		},
+		{
+			name = "UserName"
+		},
+		{
+			name        = "ClientName",
+			testdefault = "TST"
+		},
+		{
+			name = "DistributionMethod"
+		},
+		{
+			name    = "report_type",
+			default = "EOM"
+		},
+		{
+			name        = "projDir",
+			default     = "/projects/RCM_ReportsPackage",
+			testdefault = "/projects/RCM_ReportsPackage"
+		},
+		{
+			name        = "ccyymm",
+			testdefault = "201705"
+		}
+	}
+};
+
+object 'TSKL' "Main" {
+	contents = {
+		`Remove report`,
+		`Update table`,
+		`Re-Run Report`
+	}
+};
+
+object 'TASK' "Remove report" {
+	processes = {
+		`Execute-1-EXE`
+	}
+};
+
+object 'PROC' "Execute-1-EXE" {
+	//+ coordinatex = `33`,
+	//+ coordinatey = `8`,
+	process_type  = `execute`,
+	commands      = {
+		`-rm '$(ReportDirectory)/$(ReportName)'`
+	},
+	append_output = `true`
+};
+
+object 'TASK' "Update table" {
+	processes = {
+		`SQL-1-SQL`
+	}
+};
+
+object 'PROC' "SQL-1-SQL" {
+	//+ coordinatex = `33`,
+	//+ coordinatey = `8`,
+	process_type  = `sql`,
+	sql_statement = `update report_packages_log\r\n`
+		` set time_disapproved = now(),\r\n`
+		` "modified at" = now(),\r\n`
+		` "modified by" = '$(UserName)'\r\n`
+		` where package_log_id = $(PackageLogID)`,
+	sql_source    = `reports_package`
+};
+
+object 'TASK' "Re-Run Report" {
+	processes = {
+		`re-run-EXE`
+	}
+};
+
+object 'PROC' "re-run-EXE" {
+	//+ coordinatex = `33`,
+	//+ coordinatey = `33`,
+	process_type  = `execute`,
+	commands      = {
+		`perl $(projDir)/programs/rcm_eom_package.pl $(ClientName) $(ccyymm) $(PackageID)`
+	},
+	append_output = `true`
+};

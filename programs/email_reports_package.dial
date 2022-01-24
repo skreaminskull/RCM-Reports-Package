@@ -1,0 +1,18 @@
+reportDir="/mnt/nfs/EOM";
+reportName="EOM Reports Package";
+emailSubject="Test Email";
+to="test@test.com";
+cc="test@test.com";
+bcc = "";
+
+mail.set_server("x.x.x.x");
+mail.set_from("noreply@test.com");
+
+messageFile = "/projects/RCM_ReportsPackage/email/message.html";
+pdfAttach = calc.concat("\"",reportDir,"/",reportName,"\"", ", \"pdf,attach\"");
+pdfAttach = calc.concat(reportDir,"/  ",reportName);
+htmlAttach = calc.concat("\"",messageFile,"\"", ", \"html,attach\"");
+console.writeln(pdfAttach);
+console.writeln(htmlAttach);
+mail.multipart_cc(to, cc, bcc, emailSubject, pdfAttach, "pdf,attach", "/var/opt/DI/dl-dataroot/projects/DI_ReportsPackage/email/message.html", "html, attach");
+console.writeln("Message sent");
